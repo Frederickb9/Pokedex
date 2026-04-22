@@ -1,9 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 
-// ─── TIPOS DE TYPESCRIPT ─────────────────────────────────────────────────────
-// Estas interfaces describen la forma exacta de los objetos que devuelve la PokeAPI.
-// TypeScript las usa para autocompletar y detectar errores en tiempo de compilación.
-
 // Representa un tipo individual dentro del array pokemon.types
 interface PokemonType {
   slot: number;
@@ -75,7 +71,7 @@ export interface UsePokedexReturn {
   total:         number;
 }
 
-// ─── MAPAS DE COLORES POR TIPO ───────────────────────────────────────────────
+// MAPAS DE COLORES POR TIPO
 // Record<string, string> = objeto cuyas claves y valores son strings.
 // TYPE_COLORS_MAP → color claro para los badges (texto negro encima).
 // CARD_COLORS_MAP → color oscuro para gradientes de tarjetas y modal.
@@ -100,23 +96,22 @@ export const CARD_COLORS_MAP: Record<string, string> = {
 // Cantidad de Pokémon a cargar — Gen I completa
 const TOTAL_POKEMON = 151;
 
-// ─── CUSTOM HOOK: usePokedex ─────────────────────────────────────────────────
+// CUSTOM HOOK: usePokedex
 // Encapsula toda la lógica de datos: fetch, estados, filtrado y tipos.
 // Al separarlo de App.tsx, el componente raíz queda limpio y solo se encarga
 // de renderizar. Este patrón se llama "Separation of Concerns".
 export function usePokedex(): UsePokedexReturn {
 
-  // ── ESTADOS ────────────────────────────────────────────────────────────────
+  // ESTADOS
   const [allPokemon, setAllPokemon] = useState<Pokemon[]>([]);       // Array con los 151 objetos de la API
   const [loading, setLoading]       = useState<boolean>(true);       // true mientras la API responde
   const [error, setError]           = useState<string | null>(null); // mensaje de error si el fetch falla
   const [search, setSearch]         = useState<string>('');          // texto del input de búsqueda
   const [activeType, setActiveType] = useState<string>('all');       // tipo seleccionado en el filtro
 
-  // ── FETCH INICIAL ──────────────────────────────────────────────────────────
+  // FETCH INICIAL
   // useEffect con [] vacío = se ejecuta una sola vez al montar el componente.
-  // Lanza las 151 peticiones EN PARALELO con Promise.all — si fueran
-  // secuenciales tardaría ~30s; en paralelo tarda ~1-2s.
+  // Lanza las 151 peticiones EN PARALELO con Promise.all — si fueran secuenciales tardaría ~30s; en paralelo tarda ~1-2s.
   useEffect(() => {
     const fetchAll = async (): Promise<void> => {
       try {
@@ -145,9 +140,8 @@ export function usePokedex(): UsePokedexReturn {
     fetchAll();
   }, []); // ← array de dependencias vacío = solo se ejecuta al montar
 
-  // ── TIPOS ÚNICOS ───────────────────────────────────────────────────────────
-  // useMemo recalcula solo cuando allPokemon cambia (es decir, una sola vez
-  // después del fetch). Usa un Set para eliminar duplicados automáticamente.
+  // TIPOS ÚNICOS
+  // useMemo recalcula solo cuando allPokemon cambia (es decir, una sola vez después del fetch). Usa un Set para eliminar duplicados automáticamente.
   // Resultado: ['all', 'bug', 'dragon', 'electric', 'fairy', 'fire', ...]
   const allTypes = useMemo<string[]>(() => {
     const types = new Set<string>();
@@ -157,7 +151,7 @@ export function usePokedex(): UsePokedexReturn {
     return ['all', ...Array.from(types).sort()]; // 'all' siempre primero
   }, [allPokemon]);
 
-  // ── FILTRADO EN TIEMPO REAL ────────────────────────────────────────────────
+  // FILTRADO EN TIEMPO REAL
   // useMemo recalcula la lista filtrada cada vez que cambian: allPokemon,
   // search o activeType. Sin useMemo, el filtro correría en cada re-render
   // aunque nada relevante haya cambiado.
@@ -173,7 +167,7 @@ export function usePokedex(): UsePokedexReturn {
     });
   }, [allPokemon, search, activeType]);
 
-  // ── RETORNO DEL HOOK ───────────────────────────────────────────────────────
+  //RETORNO DEL HOOK
   // Expone todo lo que App.tsx necesita: datos + setters + estado de UI
   return {
     pokemon: filtered,  // lista ya filtrada (la que se renderiza)

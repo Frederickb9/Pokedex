@@ -1,18 +1,9 @@
-// PokemonModal.tsx
-// Modal de detalles completos del Pokémon seleccionado.
-// Se monta cuando App.tsx tiene un pokemon en el estado selectedPokemon.
-// Incluye: imagen hero flotante con anillos animados, info básica,
-// habilidades, barras de stats con glow y chips de movimientos.
-//
-// Cierre: clic en el overlay, botón ✕, o tecla Escape.
-
 import { useEffect } from 'react';
 import type { CSSProperties } from 'react';
 import { TYPE_COLORS_MAP, CARD_COLORS_MAP } from './usePokedex.ts';
 import type { Pokemon } from './usePokedex.ts';
 
-// ── TIPOS DE TYPESCRIPT ───────────────────────────────────────────────────────
-// Extiende CSSProperties para las variables CSS personalizadas del modal.
+// TIPOS DE TYPESCRIP T
 interface CustomCSS extends CSSProperties {
   '--card-color'?: string;  // color oscuro del tipo para el gradiente del modal
   '--fill-color'?: string;  // color claro del tipo para el glow de las barras de stat
@@ -25,7 +16,6 @@ interface PokemonModalProps {
 }
 
 // Metadatos de cada stat: etiqueta legible, ícono y valor máximo posible.
-// El máximo se usa para calcular el porcentaje de la barra (base_stat / max * 100).
 interface StatMeta {
   label: string;
   max:   number;
@@ -43,25 +33,20 @@ const STAT_META: Record<string, StatMeta> = {
 
 export default function PokemonModal({ pokemon, onClose }: PokemonModalProps) {
 
-  // ── Cierre con tecla Escape ────────────────────────────────────────────────
-  // Añade un listener al montar y lo LIMPIA al desmontar (return del useEffect).
-  // Sin la limpieza, cada vez que se abre el modal se acumularía un listener nuevo.
-  // KeyboardEvent es el tipo nativo del DOM para eventos de teclado.
+  // Cierre con tecla Escape
   useEffect(() => {
     const fn = (e: KeyboardEvent): void => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', fn);
     return () => window.removeEventListener('keydown', fn); // limpieza
   }, [onClose]);
 
-  // ── Bloquear scroll del body mientras el modal está abierto ───────────────
-  // Evita que el usuario scrollee la página de fondo al hacer scroll en el modal.
-  // El return restaura overflow al desmontar.
+  // Bloquear scroll del body mientras el modal está abierto 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
   }, []);
 
-  // ── Variables derivadas del objeto pokémon ─────────────────────────────────
+  // Variables derivadas del objeto pokémon
   const primaryType = pokemon.types[0].type.name;
   const cardColor   = CARD_COLORS_MAP[primaryType] ?? '#333'; // color oscuro para gradiente del modal
   const typeColor   = TYPE_COLORS_MAP[primaryType] ?? '#aaa'; // color claro para barras de stats
@@ -82,49 +67,33 @@ export default function PokemonModal({ pokemon, onClose }: PokemonModalProps) {
   const modalStyle: CustomCSS = { '--card-color': cardColor };
 
   return (
-    // ── OVERLAY ───────────────────────────────────────────────────────────────
-    // Clic en el overlay (fondo oscuro) cierra el modal.
-    // backdrop-filter: blur+saturate en CSS crea el efecto cinematográfico de fondo.
+    // OVERLAY
     <div className="modal-overlay" onClick={onClose}>
-
-      {/* stopPropagation: evita que el clic DENTRO del modal llegue al overlay */}
       <div
         className="modal-content"
         onClick={(e: React.MouseEvent) => e.stopPropagation()}
         style={modalStyle}
       >
 
-        {/* Botón cerrar — gira 90° al hover (definido en CSS) */}
         <button className="modal-close" onClick={onClose}>✕</button>
 
-        {/* ── SECCIÓN HERO (imagen) ─────────────────────────────────────── */}
+        {/*SECCIÓN HERO (imagen)*/}
         <div className="modal-hero">
-          {/* Fondo radial del color del tipo principal */}
           <div className="modal-hero-bg" />
-
-          {/* Tres anillos concéntricos que pulsan con animación ringPulse (CSS) */}
           <div className="modal-hero-rings">
             <div className="ring ring-1" />
             <div className="ring ring-2" />
             <div className="ring ring-3" />
           </div>
-
-          {/* Sprite principal — animación float infinita definida en CSS */}
           <img src={sprite} alt={pokemon.name} className="modal-sprite" />
         </div>
 
-        {/* ── CUERPO DEL MODAL ──────────────────────────────────────────── */}
+        {/*CUERPO DEL MODAL*/}
         <div className="modal-body">
-
-          {/* ID del Pokémon en formato badge rojo */}
           <div className="modal-name-row">
             <span className="modal-id-tag">{formattedId}</span>
           </div>
-
-          {/* Nombre en Bebas Neue — grande y prominente */}
           <h2 className="modal-name">{pokemon.name}</h2>
-
-          {/* Badges de tipos — igual que en la tarjeta */}
           <div className="modal-types">
             {pokemon.types.map(({ type }) => (
               <span
@@ -137,7 +106,7 @@ export default function PokemonModal({ pokemon, onClose }: PokemonModalProps) {
             ))}
           </div>
 
-          {/* ── FICHA DE INFO BÁSICA ── */}
+          {/*FICHA DE INFO BÁSICA*/}
           {/* Grid de 3 tarjetas glassmorphism: Peso / Talla / XP Base */}
           <div className="modal-info-cards">
             <div className="info-card">
@@ -175,7 +144,6 @@ export default function PokemonModal({ pokemon, onClose }: PokemonModalProps) {
           <div className="stats-grid">
             {pokemon.stats.map(({ stat, base_stat }) => {
               const meta: StatMeta = STAT_META[stat.name] ?? { label: stat.name, max: 255, icon: '•' };
-              // pct = porcentaje para el ancho de la barra (0-100%)
               const pct = Math.round((base_stat / meta.max) * 100);
 
               // Estilo tipado para la barra de progreso con su glow
@@ -200,16 +168,13 @@ export default function PokemonModal({ pokemon, onClose }: PokemonModalProps) {
             })}
           </div>
 
-          {/* ── MOVIMIENTOS (primeros 12) ── */}
-          {/* slice(0, 12) limita la lista para no saturar el modal */}
+          {/*MOVIMIENTOS (primeros 12)*/}
           <p className="modal-section-title">Movimientos</p>
           <div className="moves-wrap">
             {pokemon.moves.slice(0, 12).map(({ move }) => (
-              // El color de fondo del chip usa color-mix con --card-color (CSS)
               <span key={move.name} className="move-chip">{move.name}</span>
             ))}
           </div>
-
         </div>
       </div>
     </div>

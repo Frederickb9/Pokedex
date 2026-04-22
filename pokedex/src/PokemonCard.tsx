@@ -1,16 +1,8 @@
-// PokemonCard.tsx
-// Tarjeta individual de cada Pokémon en el grid principal.
-// Al hacer clic abre el modal pasando el objeto pokemon completo al padre.
-// Usa variables CSS (--card-color) para que el gradiente, el glow y la línea
-// inferior se adapten automáticamente al tipo de cada Pokémon.
-
 import type { CSSProperties } from 'react';
 import { TYPE_COLORS_MAP, CARD_COLORS_MAP } from './usePokedex.ts';
 import type { Pokemon } from './usePokedex.ts';
 
-// ── TIPOS DE TYPESCRIPT ───────────────────────────────────────────────────────
-// Extiende CSSProperties para permitir la variable CSS --card-color.
-// Sin esto TypeScript marcaría error al poner '--card-color' en el style.
+// TIPOS DE TYPESCRIPT
 interface CustomCSS extends CSSProperties {
   '--card-color'?: string;
 }

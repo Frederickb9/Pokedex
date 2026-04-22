@@ -1,14 +1,3 @@
-// App.tsx
-// Componente raíz de la Pokédex. Orquesta todos los demás componentes:
-// - ParticlesCanvas → fondo animado con canvas
-// - Hero header     → título, contadores y buscador
-// - TypeFilter      → botones de filtro por tipo
-// - PokemonCard     → grid de tarjetas
-// - PokemonModal    → modal de detalles (condicional)
-//
-// La lógica de datos vive en usePokedex.ts, aquí solo hay lógica de UI:
-// qué pokémon está seleccionado para el modal (selectedPokemon).
-
 import { useState, useEffect, useRef } from 'react';
 import { usePokedex } from './usePokedex.ts';
 import type { Pokemon } from './usePokedex.ts';
@@ -17,92 +6,79 @@ import TypeFilter   from './TypeFilter';
 import PokemonModal from './PokemonModal';
 import './App.css';
 
-// ─── COMPONENTE: ParticlesCanvas ─────────────────────────────────────────────
-// Canvas de posición fixed que cubre toda la pantalla y dibuja 80 partículas
-// flotando en loop con requestAnimationFrame. Es puramente decorativo y
-// usa pointer-events: none (CSS) para no interferir con los clics del usuario.
+// COMPONENTE: ParticlesCanvas 
 
-// Tipo de cada partícula para el array DOTS
 interface Dot {
-  x:     number; // posición horizontal
-  y:     number; // posición vertical
-  r:     number; // radio en px
-  vx:    number; // velocidad horizontal
-  vy:    number; // velocidad vertical
-  alpha: number; // opacidad (0-1)
+  x:     number; 
+  y:     number; 
+  r:     number; 
+  vx:    number; 
+  vy:    number; 
+  alpha: number; 
 }
 
 function ParticlesCanvas() {
-  // useRef<HTMLCanvasElement>(null) le dice a TS que la ref apunta a un <canvas>
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return; // guarda de seguridad: si el canvas no existe, no hace nada
+    if (!canvas) return; 
 
-    // getContext devuelve CanvasRenderingContext2D | null → el ! asegura que no es null
     const ctx = canvas.getContext('2d')!;
 
-    // Dimensiones iniciales = tamaño de la ventana
+    
     let W = canvas.width  = window.innerWidth;
     let H = canvas.height = window.innerHeight;
-    let raf: number; // ID del requestAnimationFrame, necesario para cancelarlo en el cleanup
+    let raf: number;
 
-    // Crea 80 partículas con posición, tamaño, velocidad y opacidad aleatorias.
-    // El tipo Dot garantiza que cada partícula tiene todas las propiedades necesarias.
     const DOTS: Dot[] = Array.from({ length: 80 }, () => ({
-      x:     Math.random() * W,            // posición horizontal inicial
-      y:     Math.random() * H,            // posición vertical inicial
-      r:     Math.random() * 1.5 + 0.3,   // radio entre 0.3 y 1.8 px
-      vx:    (Math.random() - 0.5) * 0.25, // velocidad X: lenta y bidireccional
-      vy:    (Math.random() - 0.5) * 0.25, // velocidad Y: lenta y bidireccional
-      alpha: Math.random() * 0.5 + 0.1,   // opacidad entre 0.1 y 0.6
+      x:     Math.random() * W,            
+      y:     Math.random() * H,            
+      r:     Math.random() * 1.5 + 0.3,   
+      vx:    (Math.random() - 0.5) * 0.25, 
+      vy:    (Math.random() - 0.5) * 0.25, 
+      alpha: Math.random() * 0.5 + 0.1,   
     }));
 
-    // Loop de animación: limpia el canvas y redibuja cada partícula en su nueva posición
     const draw = (): void => {
-      ctx.clearRect(0, 0, W, H); // borra el frame anterior
+      ctx.clearRect(0, 0, W, H); 
 
       DOTS.forEach((d: Dot) => {
-        d.x += d.vx; // avanza en X
-        d.y += d.vy; // avanza en Y
+        d.x += d.vx; 
+        d.y += d.vy; 
 
-        // Wrap-around: si sale por un borde, aparece por el lado opuesto
         if (d.x < 0) d.x = W;
         if (d.x > W) d.x = 0;
         if (d.y < 0) d.y = H;
         if (d.y > H) d.y = 0;
 
-        // Dibuja un círculo pequeño (partícula)
         ctx.beginPath();
         ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(180,190,255,${d.alpha})`; // azul-lavanda semitransparente
+        ctx.fillStyle = `rgba(180,190,255,${d.alpha})`; 
         ctx.fill();
       });
 
-      raf = requestAnimationFrame(draw); // programa el siguiente frame
+      raf = requestAnimationFrame(draw); 
     };
 
-    draw(); // arranca el loop
+    draw(); 
 
-    // Redimensiona el canvas si el usuario cambia el tamaño de la ventana
     const onResize = (): void => {
       W = canvas.width  = window.innerWidth;
       H = canvas.height = window.innerHeight;
     };
     window.addEventListener('resize', onResize);
 
-    // Limpieza: cancela el loop y elimina el listener al desmontar el componente
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', onResize);
     };
-  }, []); // [] → solo se ejecuta al montar
+  }, []);
 
   return <canvas ref={canvasRef} className="particles-canvas" />;
 }
 
-// ─── COMPONENTE PRINCIPAL: App ────────────────────────────────────────────────
+// COMPONENTE PRINCIPAL: App
 export default function App() {
 
   // Desestructura todo lo necesario del custom hook
@@ -117,10 +93,9 @@ export default function App() {
   } = usePokedex();
 
   // Estado local de UI: qué pokémon está seleccionado para mostrar en el modal.
-  // Pokemon | null → null = modal cerrado, objeto = modal abierto con ese pokémon.
   const [selectedPokemon, setSelectedPokemon] = useState<Pokemon | null>(null);
 
-  // ── PANTALLA DE CARGA ──────────────────────────────────────────────────────
+  // PANTALLA DE CARGA
   // Muestra un spinner con el título y el progreso mientras llegan los datos.
   if (loading) return (
     <div className="loading-screen">
@@ -130,10 +105,10 @@ export default function App() {
     </div>
   );
 
-  // ── PANTALLA DE ERROR ──────────────────────────────────────────────────────
+  //PANTALLA DE ERROR
   if (error) return <div className="error-screen">{error}</div>;
 
-  // ── RENDER PRINCIPAL ───────────────────────────────────────────────────────
+  //RENDER PRINCIPAL
   return (
     <>
       {/* ParticlesCanvas está fuera del .app para cubrir toda la pantalla */}
@@ -141,7 +116,7 @@ export default function App() {
 
       <div className="app">
 
-        {/* ── HERO HEADER ─────────────────────────────────────────────────── */}
+        {/*HERO HEADER*/}
         <header className="hero">
           {/* Pokébola gigante decorativa que rota lentamente (animación CSS) */}
           <div className="hero-pokeball" />
@@ -159,18 +134,15 @@ export default function App() {
               <span className="hero-stat-label">Total</span>
             </div>
             <div className="hero-stat">
-              {/* Mostrando cambia en tiempo real al filtrar */}
               <span className="hero-stat-num">{pokemon.length}</span>
               <span className="hero-stat-label">Mostrando</span>
             </div>
             <div className="hero-stat">
-              {/* allTypes.length - 1 porque 'all' no es un tipo real de la API */}
               <span className="hero-stat-num">{allTypes.length - 1}</span>
               <span className="hero-stat-label">Tipos</span>
             </div>
           </div>
 
-          {/* Input de búsqueda — onChange actualiza el estado en cada tecla */}
           <div className="search-wrap">
             <span className="search-icon">🔍</span>
             <input
@@ -178,22 +150,19 @@ export default function App() {
               type="text"
               placeholder="Buscar Pokémon..."
               value={search}
-              // React.ChangeEvent<HTMLInputElement> es el tipo del evento del input
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
             />
           </div>
         </header>
 
-        {/* ── FILTROS POR TIPO ─────────────────────────────────────────────── */}
-        {/* TypeFilter es un componente controlado: no tiene estado propio,
-            solo recibe datos y notifica al padre mediante onTypeChange */}
+        {/*FILTROS POR TIPO*/}
         <TypeFilter
           types={allTypes}
           activeType={activeType}
           onTypeChange={setActiveType}
         />
 
-        {/* ── BARRA DE RESULTADOS ──────────────────────────────────────────── */}
+        {/*BARRA DE RESULTADOS*/}
         {/* Muestra cuántos pokémon hay en la vista actual y el filtro activo */}
         <div className="results-bar">
           <span className="results-count">
@@ -206,17 +175,15 @@ export default function App() {
           </span>
         </div>
 
-        {/* ── GRID DE TARJETAS ─────────────────────────────────────────────── */}
+        {/*GRID DE TARJETAS*/}
         <div className="grid">
           {pokemon.length === 0 ? (
-            // Estado vacío: no hay resultados para el filtro/búsqueda actual
             <div className="empty-state">
               <div className="empty-state-icon">😔</div>
               <p>No se encontraron Pokémon</p>
             </div>
           ) : (
-            // Renderiza una PokemonCard por cada pokémon en la lista filtrada.
-            // `index` se pasa para el stagger de animación de entrada.
+
             pokemon.map((p: Pokemon, i: number) => (
               <PokemonCard
                 key={p.id}                   // key única y estable (el ID no cambia)
@@ -229,10 +196,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* ── MODAL ────────────────────────────────────────────────────────────── */}
-      {/* Renderizado condicional: el modal SOLO existe en el DOM si hay un
-          pokémon seleccionado. Al cerrar, setSelectedPokemon(null) lo desmonta
-          completamente, limpiando sus useEffects (listeners, overflow, etc.) */}
+      {/*MODAL*/}
       {selectedPokemon && (
         <PokemonModal
           pokemon={selectedPokemon}
